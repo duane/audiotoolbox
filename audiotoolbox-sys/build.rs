@@ -43,6 +43,7 @@ fn main() {
     .whitelisted_function("AudioQueueGetProperty")
     .whitelisted_function("AudioQueueGetPropertySize")
     .whitelisted_function("AudioQueueNewInput")
+    .whitelisted_function("AudioFileWritePackets")
     .hide_type("OSStatus")  
     .hide_type("CFURLRef")
     .whitelisted_type("AudioQueueInputCallback")

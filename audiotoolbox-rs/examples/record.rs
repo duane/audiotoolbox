@@ -12,6 +12,7 @@ use audiotoolbox::audio_hardware_base::*;
 use audiotoolbox_sys::*;
 use std::env::args;
 use std::os::raw::c_void;
+use std::ptr;
 
 
 pub unsafe extern "C" fn input_callback(user_data: *mut c_void,
@@ -20,6 +21,32 @@ pub unsafe extern "C" fn input_callback(user_data: *mut c_void,
                                         start_time: *const AudioTimeStamp,
                                         num_packets: u32,
                                         packet_desc: *const AudioStreamPacketDescription) {
+    let mut recorder = user_data as *mut Recorder;
+    let mut num_packets_local = num_packets;
+    if num_packets > 0 {
+        let mut error = unsafe {
+            AudioFileWritePackets((*recorder).file.as_ref(),
+                                  false as u8,
+                                  (*buffer).mAudioDataByteSize,
+                                  packet_desc,
+                                  (*recorder).packet,
+                                  &mut num_packets_local,
+                                  (*buffer).mAudioData)
+        };
+        if error != 0 {
+            panic!("got error in callback while writing packets: {:?}", error);
+        }
+        unsafe {
+            println!("Wrote {:?} bytes to file", (*buffer).mAudioDataByteSize);
+        }
+        (*recorder).packet += num_packets as i64;
+        if (*recorder).running {
+            error = unsafe { AudioQueueEnqueueBuffer(queue, buffer, 0, ptr::null()) };
+            if error != 0 {
+                panic!("got error in callback while enqueuing buffer: {:?}", error);
+            }
+        }
+    }
 }
 
 struct Recorder {
@@ -67,6 +94,8 @@ fn main() {
         .get_buffer_size(&format, 0.5)
         .expect("could not get expected buffer size");
 
+    queue.copy_cookie_to_file(&mut recorder.file);
+
     let num_record_buffers = 3;
     let buffers = Vec::<Buffer>::with_capacity(num_record_buffers);
     for i in 0..num_record_buffers {
@@ -82,6 +111,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_line(&mut input);
     println!("* recording finished *");
+    recorder.running = false;
     queue.stop(false).expect("unable to stop audio queue");
-    
+    queue.copy_cookie_to_file(&mut recorder.file);
 }
