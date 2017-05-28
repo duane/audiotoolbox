@@ -4,15 +4,15 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-  // Tell cargo to tell rustc to link the system bzip2
-  // shared library.
-  println!("cargo:rustc-link-lib=framework=AudioToolbox");
-  println!("cargo:rustc-link-lib=framework=CoreAudio");
+    // Tell cargo to tell rustc to link the system bzip2
+    // shared library.
+    println!("cargo:rustc-link-lib=framework=AudioToolbox");
+    println!("cargo:rustc-link-lib=framework=CoreAudio");
 
-  // The bindgen::Builder is the main entry point
-  // to bindgen, and lets you build up options for
-  // the resulting bindings.
-  let bindings = bindgen::Builder::default()
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let bindings = bindgen::Builder::default()
     // Do not generate unstable Rust code that
     // requires a nightly rustc and enabling
     // unstable features.
@@ -38,8 +38,14 @@ fn main() {
     .whitelisted_function("AudioObjectGetPropertyDataSize")
     .whitelisted_function("AudioHardwareGetProperty")
     .whitelisted_function("AudioHardwareServiceGetPropertyData")
+    .whitelisted_function("AudioFileSetProperty")
+    .whitelisted_function("AudioQueueSetProperty")
+    .whitelisted_function("AudioQueueGetProperty")
+    .whitelisted_function("AudioQueueGetPropertySize")
+    .whitelisted_function("AudioQueueNewInput")
     .hide_type("OSStatus")  
     .hide_type("CFURLRef")
+    .whitelisted_type("AudioQueueInputCallback")
     .whitelisted_type("AudioFileFlags")
     .whitelisted_type("AudioQueueOutputCallback")
     .whitelisted_type("AudioDeviceID")
@@ -50,6 +56,7 @@ fn main() {
     .whitelisted_type("AudioFileTypeID")
     .whitelisted_type("AudioFilePermissions")
     .whitelisted_type("AudioQueueRef")
+    .whitelisted_var("kAudioConverterPropertyMaximumOutputPacketSize")
     .whitelisted_var("kAudioHardwarePropertyDevices")
     .whitelisted_var("kAudioQueueProperty_MagicCookie")
     .whitelisted_var("kAudioFilePropertyMagicCookieData")
@@ -137,9 +144,9 @@ fn main() {
     // Unwrap the Result and panic on failure.
     .expect("Unable to generate bindings");
 
-  // Write the bindings to the $OUT_DIR/bindings.rs file.
-  let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-  bindings
-    .write_to_file(out_path.join("bindings.rs"))
-    .expect("Couldn't write bindings!");
+    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings!");
 }
