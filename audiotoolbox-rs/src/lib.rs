@@ -6,3 +6,4 @@ extern crate libc;
 pub mod audio_file;
 pub mod audio_queue;
 pub mod audio_hardware_base;
+pub mod extended_audio_file;

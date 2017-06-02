@@ -14,7 +14,7 @@ use std::env::args;
 use std::os::raw::c_void;
 use std::ptr;
 
-
+#[allow(unused_variables)]
 pub unsafe extern "C" fn input_callback(user_data: *mut c_void,
                                         queue: AudioQueueRef,
                                         buffer: AudioQueueBufferRef,
@@ -24,24 +24,22 @@ pub unsafe extern "C" fn input_callback(user_data: *mut c_void,
     let mut recorder = user_data as *mut Recorder;
     let mut num_packets_local = num_packets;
     if num_packets > 0 {
-        let mut error = unsafe {
-            AudioFileWritePackets((*recorder).file.as_ref(),
-                                  false as u8,
-                                  (*buffer).mAudioDataByteSize,
-                                  packet_desc,
-                                  (*recorder).packet,
-                                  &mut num_packets_local,
-                                  (*buffer).mAudioData)
-        };
+        let mut error = AudioFileWritePackets((*recorder).file.get_id(),
+                                              false as u8,
+                                              (*buffer).mAudioDataByteSize,
+                                              packet_desc,
+                                              (*recorder).packet,
+                                              &mut num_packets_local,
+                                              (*buffer).mAudioData);
         if error != 0 {
             panic!("got error in callback while writing packets: {:?}", error);
         }
-        unsafe {
-            println!("Wrote {:?} bytes to file", (*buffer).mAudioDataByteSize);
-        }
+
+        println!("Wrote {:?} bytes to file", (*buffer).mAudioDataByteSize);
+
         (*recorder).packet += num_packets as i64;
         if (*recorder).running {
-            error = unsafe { AudioQueueEnqueueBuffer(queue, buffer, 0, ptr::null()) };
+            error = AudioQueueEnqueueBuffer(queue, buffer, 0, ptr::null());
             if error != 0 {
                 panic!("got error in callback while enqueuing buffer: {:?}", error);
             }
@@ -63,7 +61,7 @@ fn main() {
     let file_url =
         CFURL::from_file_system_path(CFString::new(argv[1].as_ref()), kCFURLPOSIXPathStyle, false);
     let mut format = AudioStreamBasicDescription {
-        mSampleRate: AudioDevice::default()
+        mSampleRate: AudioDevice::default_input()
             .expect("unable to find default input device")
             .get_sample_rate()
             .expect("unable to get input device sample rate"),
@@ -94,11 +92,12 @@ fn main() {
         .get_buffer_size(&format, 0.5)
         .expect("could not get expected buffer size");
 
-    queue.copy_cookie_to_file(&mut recorder.file);
+    queue
+        .copy_cookie_to_file(&mut recorder.file)
+        .expect("could not copy cookie to file from queue");
 
     let num_record_buffers = 3;
-    let buffers = Vec::<Buffer>::with_capacity(num_record_buffers);
-    for i in 0..num_record_buffers {
+    for _ in 0..num_record_buffers {
         let mut buffer = Buffer::new(&mut queue, buffer_byte_size)
             .expect("could not allocate buffer");
         queue
@@ -109,9 +108,11 @@ fn main() {
     queue.start().expect("error starting audio queue");
     println!("Recording, press <return> to stop");
     let mut input = String::new();
-    io::stdin().read_line(&mut input);
+    let _ = io::stdin().read_line(&mut input);
     println!("* recording finished *");
     recorder.running = false;
     queue.stop(false).expect("unable to stop audio queue");
-    queue.copy_cookie_to_file(&mut recorder.file);
+    queue
+        .copy_cookie_to_file(&mut recorder.file)
+        .expect("Could not copy cookie to file from queue");
 }
