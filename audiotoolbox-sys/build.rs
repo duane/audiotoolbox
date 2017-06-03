@@ -119,6 +119,7 @@ fn main() {
     .whitelisted_function("ExtAudioFileWriteAsync")
     .whitelisted_function("ExtAudioFileGetPropertyInfo")
     .whitelisted_function("ExtAudioFileGetProperty")
+    .whitelisted_function("ExtAudioFileSetProperty")
 
     .whitelisted_type("ExtAudioFileRef")
     .whitelisted_type("ExtAudioFilePropertyID")
@@ -163,7 +164,7 @@ fn main() {
     .hide_type("OSStatus")  
     .hide_type("CFURLRef")
 
-    // ???
+    // CoreAudio
     .whitelisted_type("AudioStreamBasicDescription")
     .whitelisted_type("AudioStreamPacketDescription")
 
@@ -204,6 +205,11 @@ fn main() {
     .whitelisted_var("kAudioFormatAMR_WB")
     .whitelisted_var("kAudioFormatEnhancedAC3")
     .whitelisted_var("kAudioFormatMPEG4AAC_ELD_V2")
+
+    .whitelisted_var("kLinearPCMFormatFlagsAreAllClear")
+    .whitelisted_var("kAudioFormatFlagIsPacked")
+    .whitelisted_var("kAudioFormatFlagIsBigEndian")
+    .whitelisted_var("kAudioFormatFlagIsSignedInteger")
 
     .whitelisted_var("kAudioConverterPropertyMaximumOutputPacketSize")
 

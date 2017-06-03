@@ -10,6 +10,9 @@ use core_foundation::url::{kCFURLPOSIXPathStyle, CFURL};
 use core_foundation::string::CFString;
 use std::os::raw::c_void;
 use std::slice;
+use std::mem;
+
+static BUFFER_SIZE: usize = 1 << 14;
 
 fn main() {
     let argv: Vec<_> = args().collect();
@@ -18,30 +21,32 @@ fn main() {
     }
     let file_url =
         CFURL::from_file_system_path(CFString::new(argv[1].as_ref()), kCFURLPOSIXPathStyle, false);
-    let file_string = file_url.get_string();
-    println!("File: {:?}", file_string);
+
     let mut audio_file = ExtAudioFile::open(file_url).expect("unable to open file");
-    let client_description = match audio_file
-              .get_property(ExtAudioFilePropertyId::ClientDataFormat)
-              .expect("could not get data format") {
-        ExtAudioFileProperty::ClientDataFormat(data_format) => data_format,
-        _ => panic!("Expected ExtAudioFileProperty::ClientDataFormat"),
+    let bytes_per_channel = mem::size_of::<u16>() as u32;
+    let channels_per_frame = 2;
+    let frames_per_packet = 1;
+    let bytes_per_frame = bytes_per_channel * channels_per_frame;
+    let bytes_per_packet = bytes_per_frame * frames_per_packet;
+    let bits_per_channel = bytes_per_channel * 8;
+    let client_description = AudioStreamBasicDescription{
+        mSampleRate: 41000f64,
+        mFormatID: kAudioFormatLinearPCM as u32,
+        mFormatFlags: kAudioFormatFlagIsPacked as u32 | kAudioFormatFlagIsBigEndian as u32 | kAudioFormatFlagIsSignedInteger as u32,
+        mBytesPerPacket: bytes_per_packet,
+        mFramesPerPacket: frames_per_packet,
+        mBytesPerFrame: bytes_per_frame,
+        mChannelsPerFrame: channels_per_frame,
+        mBitsPerChannel: bits_per_channel,
+        mReserved: 0,
     };
+    audio_file.set_property(ExtAudioFileProperty::ClientDataFormat(client_description)).expect("client data fmt");
     let description = match audio_file
               .get_property(ExtAudioFilePropertyId::FileDataFormat)
               .expect("could not get data format") {
         ExtAudioFileProperty::FileDataFormat(data_format) => data_format,
         _ => panic!("Expected ExtAudioFileProperty::FileDataFormat"),
     };
-    println!("Got client data description: {:?}", client_description);
-    println!("Got file data description: {:?}", description);
-    let max_packet_size = match audio_file
-              .get_property(ExtAudioFilePropertyId::ClientMaxPacketSize)
-              .expect("could not get max packet size") {
-        ExtAudioFileProperty::ClientMaxPacketSize(packet_size) => packet_size,
-        _ => panic!("Expected ExtAudioFileProperty::ClientMaxPacketSize"),
-    };
-    println!("max packet size: {:?}", max_packet_size);
 
     let file_length_frames = match audio_file
               .get_property(ExtAudioFilePropertyId::FileLengthFrames)
@@ -50,8 +55,7 @@ fn main() {
         _ => panic!("expected ExtAudioFileProperty::FileLengthFrames"),
     };
 
-    let buf_size = (file_length_frames * 4) as usize;
-    println!("{:?} size buffer", buf_size);
+    let buf_size = BUFFER_SIZE;
 
     let mut raw_buffer: Vec<u8> = Vec::with_capacity(buf_size);
     for _ in 0..buf_size {
@@ -67,8 +71,6 @@ fn main() {
         mBuffers: [buffer],
     };
 
-    println!("buffer: {:?}", list.mBuffers[0]);
-
     let mut out_buf: Vec<u8> = Vec::new();
     let mut frames_to_read = file_length_frames;
     let mut frames_read: u32;
@@ -79,16 +81,12 @@ fn main() {
         if frames_read == 0 {
             break;
         }
-        println!("read {:?} frames", frames_read);
-        println!("buffer: {:?}", list.mBuffers[0]);
         list.mBuffers[0].mDataByteSize = frames_read as u32 * 4;
         unsafe {
             let slice = slice::from_raw_parts(list.mBuffers[0].mData as *const u8,
                                               list.mBuffers[0].mDataByteSize as usize);
             out_buf.extend_from_slice(slice);
         }
-        println!("out buf: {:?}", out_buf.len());
-        println!("Frames to read: {:?}", frames_to_read);
         frames_to_read -= frames_read;
     }
     println!("done");

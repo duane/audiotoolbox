@@ -47,8 +47,6 @@ impl ExtAudioFile {
                 num_frames: u32)
                 -> Result<u32, OSStatus> {
         let mut frames_read: u32 = num_frames;
-        println!("audio file: {:?}", self.0);
-        println!("frames_read: {:?}", frames_read);
         let error = unsafe { ExtAudioFileRead(self.0, &mut frames_read, buffers) };
         if error != 0 {
             Err(error)
@@ -69,6 +67,21 @@ impl ExtAudioFile {
         } else {
             Ok(frames_write)
         }
+    }
+
+    pub fn set_property(&mut self, property: ExtAudioFileProperty) -> Result<(), OSStatus> {
+        let error = match property {
+            ExtAudioFileProperty::ClientDataFormat(mut desc) => {
+                unsafe {
+                    ExtAudioFileSetProperty(self.0,
+                                            kExtAudioFileProperty_ClientDataFormat as u32,
+                                            mem::size_of::<AudioStreamBasicDescription>() as u32,
+                                            &mut desc as *mut _ as *mut c_void)
+                }
+            }
+            _ => panic!("cannot write anything but ClientDataFormat")
+        };
+        if error != 0 { Err(error) } else { Ok(()) }
     }
 
     pub fn get_property(&self,
