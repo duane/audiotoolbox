@@ -1,0 +1,8 @@
+* Tasks
+** TODO Export to some version control.
+** TODO Improve error handling coverage.
+** TODO Expose a stream interface for file read.
+** TODO Write tests.
+** TODO Write a tuner:
+*** Expose writing, backed by ringbuf.
+*** Expose async read of frequency.

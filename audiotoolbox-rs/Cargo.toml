@@ -8,4 +8,13 @@ authors = ["Duane Bailey <bailey.d.r@gmail.com>"]
 core-foundation = "0.3.0"
 core-foundation-sys = "0.3.1"
 audiotoolbox-sys = { path = "../audiotoolbox-sys" }
-libc = "0.2.23"
+libc = "0.2.30"
+
+
+bytes = "0.4"
+futures = "0.1"
+futures-cpupool = "0.1"
+tokio-io = "0.1"
+tokio-core = "0.1"
+tokio-proto = "0.1"
+tokio-service = "0.1"

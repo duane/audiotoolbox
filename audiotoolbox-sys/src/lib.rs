@@ -5,5 +5,6 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate core_foundation_sys;
+extern crate libc;
 use core_foundation_sys::base::OSStatus;
 use core_foundation_sys::url::CFURLRef;

@@ -210,6 +210,8 @@ fn main() {
     .whitelisted_var("kAudioFormatFlagIsPacked")
     .whitelisted_var("kAudioFormatFlagIsBigEndian")
     .whitelisted_var("kAudioFormatFlagIsSignedInteger")
+    .whitelisted_var("kAudioFormatFlagIsFloat")
+    .whitelisted_var("kAudioFormatFlagIsNonInterleaved")
 
     .whitelisted_var("kAudioConverterPropertyMaximumOutputPacketSize")
 

@@ -1,0 +1,22 @@
+[package]
+name = "spectrogram"
+version = "0.1.0"
+authors = ["Duane Bailey <dbailey@atlassian.com>"]
+
+[dependencies]
+apodize = "*"
+fftw = "0.3.0"
+num-complex = "0.1.37"
+audiotoolbox-sys = { path = "../audiotoolbox-sys" }
+audiotoolbox = { path = "../audiotoolbox-rs" }
+
+core-foundation = "0.3.0"
+core-foundation-sys = "0.3.1"
+
+image = "*"
+conrod = "*"
+
+bytes = "0.4"
+futures = "0.1"
+tokio-io = "0.1"
+tokio-core = "0.1"
